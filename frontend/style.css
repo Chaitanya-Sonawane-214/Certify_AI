@@ -1,0 +1,423 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f5f3;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 22px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.header p {
+  font-size: 14px;
+  color: #888;
+}
+
+/* Card */
+.card {
+  background: #ffffff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 620px;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.25rem;
+  background: #f5f5f3;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.mode-btn {
+  padding: 6px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  color: #888;
+  transition: all 0.15s;
+}
+
+.mode-btn.active {
+  background: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Upload Area */
+.upload-area {
+  border: 0.5px dashed #ccc;
+  border-radius: 8px;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.upload-area:hover {
+  background: #fafafa;
+}
+
+.upload-area.drag-over {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.upload-area.has-preview {
+  padding: 0.5rem;
+}
+
+.upload-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 12px;
+  display: block;
+}
+
+.upload-area p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.upload-area span {
+  font-size: 12px;
+  color: #aaa;
+}
+
+#file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+#preview-img {
+  display: none;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+#preview-img.visible {
+  display: block;
+}
+
+/* Single File Selected */
+.file-selected {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f5f5f3;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.file-selected.visible {
+  display: flex;
+}
+
+.file-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+}
+
+.file-remove {
+  margin-left: auto;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.file-remove:hover {
+  color: #555;
+}
+
+/* Bulk List */
+.bulk-list {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.bulk-list.visible {
+  display: flex;
+}
+
+.bulk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f3;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.bulk-item .file-dot {
+  background: #22c55e;
+}
+
+.bulk-count {
+  font-size: 12px;
+  color: #888;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+/* Verify Button */
+.verify-btn {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #1a1a1a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.verify-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.verify-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Loader */
+.loader {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 1.25rem;
+  font-size: 13px;
+  color: #888;
+}
+
+.loader.visible {
+  display: flex;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #555;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error */
+.error-msg {
+  display: none;
+  margin-top: 1rem;
+  padding: 10px 12px;
+  background: #fff0f0;
+  border: 0.5px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #b91c1c;
+  text-align: center;
+}
+
+.error-msg.visible {
+  display: block;
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-top: 0.5px solid #e8e8e8;
+  margin: 1.5rem 0;
+}
+
+/* Single Result */
+.result {
+  display: none;
+}
+
+.result.visible {
+  display: block;
+}
+
+.verdict-row {
+  margin-bottom: 1.25rem;
+}
+
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.verdict-badge.verified {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.verdict-badge.fraud {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+/* Fields Header */
+.fields-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 60px;
+  padding: 6px 0;
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 0.5px solid #f0f0f0;
+  margin-bottom: 4px;
+}
+
+/* Field Rows */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 60px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 0.5px solid #f0f0f0;
+  font-size: 13px;
+}
+
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.field-label {
+  color: #888;
+}
+
+.field-ocr {
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.field-qr {
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.match-icon {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.match-icon.ok {
+  color: #22c55e;
+}
+
+.match-icon.fail {
+  color: #ef4444;
+}
+
+/* Bulk Result */
+.bulk-result {
+  display: none;
+}
+
+.bulk-result.visible {
+  display: block;
+}
+
+.bulk-success {
+  font-size: 13px;
+  color: #15803d;
+  background: #f0fdf4;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.bulk-count {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  padding: 8px 12px 4px;
+}
+
+.bulk-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulk-item-remove {
+  margin-left: auto;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.bulk-item-remove:hover {
+  color: #555;
+}

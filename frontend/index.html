@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate Verifier – CertifyAI</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <div class="page">
+
+    <div class="header">
+      <h1>Certificate Verifier</h1>
+      <p>Upload one or more Infosys Springboard certificates to verify</p>
+    </div>
+
+    <div class="card">
+
+      <!-- Upload Area -->
+      <div class="upload-area" id="upload-area">
+        <svg class="upload-icon" id="upload-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 4v20M10 12l8-8 8 8M6 28h24" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p id="upload-label">Click or drag & drop to upload certificates</p>
+        <span id="upload-sub">PNG, JPG or PDF — single or multiple</span>
+        <img id="preview-img" src="" alt="preview" />
+        <input type="file" id="file-input" accept="image/*,.pdf" multiple />
+      </div>
+
+      <!-- Files List -->
+      <div class="bulk-list" id="bulk-list"></div>
+
+      <!-- Verify Button -->
+      <button class="verify-btn" id="verify-btn" disabled>Verify</button>
+
+      <!-- Loader -->
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <span id="loader-text">Analyzing...</span>
+      </div>
+
+      <!-- Error -->
+      <div class="error-msg" id="error-msg"></div>
+
+      <!-- Single Result -->
+      <div class="result" id="result">
+        <hr class="divider" />
+        <div class="verdict-row">
+          <div class="verdict-badge" id="verdict-badge">
+            <span id="verdict-icon"></span>
+            <span id="verdict-text"></span>
+          </div>
+        </div>
+        <div class="fields-header">
+          <span>Field</span>
+          <span>Certificate</span>
+          <span>QR Code</span>
+          <span>Match</span>
+        </div>
+        <div id="fields"></div>
+      </div>
+
+      <!-- Bulk Result -->
+      <div class="bulk-result" id="bulk-result">
+        <hr class="divider" />
+        <p class="bulk-success">✓ Verification complete! Your Excel report is downloading...</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
