@@ -10,6 +10,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 import shutil
 import os
 import asyncio
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 app = FastAPI()
@@ -72,7 +73,7 @@ def process_single(filename, temp_path):
                 'name':     extracted.get('name',   '—'),
                 'course':   extracted.get('course', '—'),
                 'date':     extracted.get('date',   '—'),
-                'flag':     'QR Error'
+                'flag':     'Manual Review - QR Unreadable'
             }
 
         comparison = compare_fields(extracted, qr_data)
@@ -84,9 +85,19 @@ def process_single(filename, temp_path):
             'flag':     comparison['verdict']
         }
 
+    except Exception as e:
+        print(f'Error processing {filename}: {e}')
+        return {
+            'filename': filename,
+            'name': '—', 'course': '—', 'date': '—',
+            'flag': 'Manual Review - Processing Error'
+        }
     finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except:
+            pass
 
 
 @app.post("/verify-bulk")
@@ -94,7 +105,9 @@ async def verify_bulk(certificates: List[UploadFile] = File(...)):
     # Save all files first
     tasks = []
     for cert in certificates:
-        temp_path = f"temp_{cert.filename}"
+        # Use UUID to avoid path issues with spaces in filenames
+        ext = os.path.splitext(cert.filename)[1]
+        temp_path = f"temp_{uuid.uuid4().hex}{ext}"
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(cert.file, buffer)
         tasks.append((cert.filename, temp_path))
