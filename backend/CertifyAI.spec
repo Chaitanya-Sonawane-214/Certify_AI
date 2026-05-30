@@ -1,88 +1,135 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-CertifyAI.spec  —  PyInstaller build specification
-Run from the backend/ directory:
-    pyinstaller CertifyAI.spec
+CertifyAI.spec  —  Lean PyInstaller build spec
+- Does NOT bundle Tesseract (user must have it installed at default path)
+- Bundles Poppler (already in repo)
+- Only specific hidden imports (no collect_submodules)
+- Aggressively excludes unused heavy packages
+
+Run from backend/ directory:
+    pyinstaller CertifyAI.spec --noconfirm --clean
 """
 
 import os
-import sys
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
-# ── Paths (relative to backend/) ──────────────────────────────────────────────
-HERE         = os.path.abspath(SPECPATH)          # = backend/
+HERE         = os.path.abspath(SPECPATH)
 FRONTEND_DIR = os.path.join(HERE, '..', 'frontend')
 POPPLER_BIN  = os.path.join(HERE, 'poppler', 'poppler-24.08.0', 'Library', 'bin')
-TESSERACT_DIR= r'C:\Program Files\Tesseract-OCR'  # adjust if installed elsewhere
 
 block_cipher = None
 
-# ── Collect hidden imports ─────────────────────────────────────────────────────
-hidden = (
-    collect_submodules('uvicorn')
-    + collect_submodules('fastapi')
-    + collect_submodules('starlette')
-    + collect_submodules('anyio')
-    + collect_submodules('multipart')
-    + collect_submodules('webview')
-    + [
-        'uvicorn.logging',
-        'uvicorn.loops',
-        'uvicorn.loops.auto',
-        'uvicorn.protocols',
-        'uvicorn.protocols.http',
-        'uvicorn.protocols.http.auto',
-        'uvicorn.protocols.websockets',
-        'uvicorn.protocols.websockets.auto',
-        'uvicorn.lifespan',
-        'uvicorn.lifespan.on',
-        'anyio._backends._asyncio',
-        'pytesseract',
-        'pyzbar.pyzbar',
-        'cv2',
-        'PIL',
-        'pdf2image',
-        'fuzzywuzzy',
-        'Levenshtein',
-        'openpyxl',
-        'email_validator',
-        'dotenv',
-    ]
-)
-
-# ── Data files to bundle ───────────────────────────────────────────────────────
-datas = [
-    # Frontend HTML/CSS/JS
-    (FRONTEND_DIR, 'frontend'),
-    # Poppler binaries (for PDF support)
-    (POPPLER_BIN, 'poppler/bin'),
-    # Tesseract executable + tessdata language files
-    (TESSERACT_DIR, 'tesseract'),
+# ── Only the imports we actually need ─────────────────────────────────────────
+hidden_imports = [
+    # uvicorn
+    'uvicorn.logging',
+    'uvicorn.loops',
+    'uvicorn.loops.auto',
+    'uvicorn.loops.asyncio',
+    'uvicorn.protocols',
+    'uvicorn.protocols.http',
+    'uvicorn.protocols.http.auto',
+    'uvicorn.protocols.http.h11_impl',
+    'uvicorn.protocols.websockets',
+    'uvicorn.protocols.websockets.auto',
+    'uvicorn.lifespan',
+    'uvicorn.lifespan.on',
+    # fastapi / starlette essentials
+    'fastapi',
+    'fastapi.responses',
+    'fastapi.staticfiles',
+    'starlette.routing',
+    'starlette.responses',
+    'starlette.staticfiles',
+    'starlette.middleware',
+    # async
+    'anyio',
+    'anyio._backends._asyncio',
+    'asyncio',
+    # multipart (file uploads)
+    'multipart',
+    'python_multipart',
+    # image / ocr / qr
+    'pytesseract',
+    'pyzbar.pyzbar',
+    'PIL',
+    'PIL.Image',
+    'PIL.ImageEnhance',
+    'PIL.ImageFilter',
+    'cv2',
+    'numpy',
+    'pdf2image',
+    # data / excel
+    'openpyxl',
+    'openpyxl.styles',
+    'fuzzywuzzy',
+    'Levenshtein',
+    # webview
+    'webview',
+    # utils
+    'requests',
+    'dotenv',
+    'h11',
 ]
-
-# Also bundle fastapi/starlette internal data files
-datas += collect_data_files('starlette')
-datas += collect_data_files('fastapi')
 
 a = Analysis(
     ['desktop.py'],
     pathex=[HERE],
     binaries=[],
-    datas=datas,
-    hiddenimports=hidden,
+    datas=[
+        # Frontend static files
+        (FRONTEND_DIR, 'frontend'),
+        # Poppler binaries for PDF→image conversion
+        (POPPLER_BIN, 'poppler/bin'),
+    ],
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # Strip heavy packages we don't need in the desktop build
-        'tkinter',
-        'matplotlib',
+        # Heavy unused packages — remove to keep bundle small
         'scipy',
         'sklearn',
+        'scikit_learn',
         'redis',
         'pymongo',
         'motor',
+        'aiohttp',
+        'aiosignal',
+        'aiosqlite',
         'pytest',
+        'black',
+        'mypy',
+        'ruff',
+        'cloudinary',
+        'qrcode',
+        'PyPDF2',
+        'pdfplumber',
+        'pdfminer',
+        'PyMuPDF',
+        'tkinter',
+        '_tkinter',
+        'matplotlib',
+        'unittest',
+        'xmlrpc',
+        'email',
+        'html',
+        'http.server',
+        'ftplib',
+        'imaplib',
+        'poplib',
+        'smtplib',
+        'telnetlib',
+        'nntplib',
+        'ossaudiodev',
+        'sunau',
+        'aifc',
+        'chunk',
+        'cgi',
+        'cgitb',
+        'imghdr',
+        'sndhdr',
+        'uu',
+        'xdrlib',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -102,8 +149,8 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,      # No console window — it's a GUI app
-    icon=None,          # Add icon path here e.g. 'assets/icon.ico'
+    console=False,       # No terminal window
+    icon=None,
 )
 
 coll = COLLECT(
