@@ -1,7 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
-from typing import List, Optional
+from typing import List
 from dotenv import load_dotenv
 load_dotenv()  # Load .env from backend/ directory
 from ocr import extract_text
@@ -14,11 +14,6 @@ import os
 import asyncio
 import uuid
 import io
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
 from concurrent.futures import ThreadPoolExecutor
 
 app = FastAPI()
@@ -28,57 +23,7 @@ app.mount("/static", StaticFiles(directory="../frontend"), name="static")
 os.environ["OMP_THREAD_LIMIT"] = "1"
 executor = ThreadPoolExecutor(max_workers=4)
 
-# ── SMTP config from environment variables ──────────────────
-SMTP_HOST     = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT     = int(os.getenv("SMTP_PORT", "587"))
-SMTP_EMAIL    = os.getenv("SMTP_EMAIL", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
-
-def send_excel_email(to_email: str, excel_bytes: bytes, total: int):
-    """Send the Excel report as an email attachment."""
-    if not SMTP_EMAIL or not SMTP_PASSWORD:
-        raise ValueError("SMTP credentials not configured. Set SMTP_EMAIL and SMTP_PASSWORD env vars.")
-
-    msg = MIMEMultipart()
-    msg["From"]    = f"CertifyAI <{SMTP_EMAIL}>"
-    msg["To"]      = to_email
-    msg["Subject"] = f"Certificate Verification Report — {total} certificate{'s' if total != 1 else ''}"
-
-    body = f"""Hi,
-
-Your bulk certificate verification is complete.
-
-Total certificates processed: {total}
-
-Please find the detailed Excel report attached. Each row is colour-coded:
-  🟢 Green  — Verified (authentic)
-  🔴 Red    — Fraud detected
-  🟡 Yellow — Manual review required
-
-—
-CertifyAI · Infosys Springboard Certificate Verification
-"""
-    msg.attach(MIMEText(body, "plain"))
-
-    # Attach Excel
-    part = MIMEBase("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    part.set_payload(excel_bytes)
-    encoders.encode_base64(part)
-    part.add_header("Content-Disposition", 'attachment; filename="verification_results.xlsx"')
-    msg.attach(part)
-
-    # Hugging Face Spaces often blocks outbound SMTP ports.
-    # Add a 5-second timeout so the app doesn't hang if the port is blocked.
-    if SMTP_PORT == 465:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
-    else:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
 
 
 @app.get("/")
@@ -216,8 +161,7 @@ def build_excel(results) -> bytes:
 
 @app.post("/verify-bulk")
 async def verify_bulk(
-    certificates: List[UploadFile] = File(...),
-    email: Optional[str] = Form(None)
+    certificates: List[UploadFile] = File(...)
 ):
     # Save all files with UUID names (avoids space issues)
     tasks = []
@@ -236,31 +180,8 @@ async def verify_bulk(
     ]
     results = await asyncio.gather(*futures)
 
-    # Build Excel bytes
+    # Build Excel and stream as download
     excel_bytes = build_excel(results)
-
-    # ── Send email if requested ──────────────────────────────
-    email = (email or "").strip()
-    if email:
-        try:
-            await asyncio.get_event_loop().run_in_executor(
-                None, send_excel_email, email, excel_bytes, len(results)
-            )
-            # Return JSON confirmation — no file download needed
-            return {"status": "emailed", "to": email, "total": len(results)}
-        except Exception as e:
-            print(f"Email error: {e}")
-            # Fall through to download if email fails
-            return StreamingResponse(
-                io.BytesIO(excel_bytes),
-                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                headers={
-                    "Content-Disposition": 'attachment; filename="verification_results.xlsx"',
-                    "X-Email-Error": str(e)
-                }
-            )
-
-    # ── No email — stream download ───────────────────────────
     return StreamingResponse(
         io.BytesIO(excel_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

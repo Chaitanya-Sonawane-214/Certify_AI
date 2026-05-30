@@ -31,6 +31,8 @@ const loaderBulk      = document.getElementById('loader-bulk');
 const loaderBulkText  = document.getElementById('loader-bulk-text');
 const errorBulk       = document.getElementById('error-bulk');
 const bulkDone        = document.getElementById('bulk-done');
+const doneTitle       = document.getElementById('done-title');
+const doneSub         = document.getElementById('done-sub');
 
 let currentTab  = 'single';
 let singleFile  = null;
@@ -109,13 +111,7 @@ function applyBulkFiles(files) {
   hide(errorBulk);
   hide(bulkDone);
   renderBulkList();
-  if (bulkFiles.length > 0) {
-    show(emailFlow);
-    btnBulk.disabled = false;
-  } else {
-    hide(emailFlow);
-    btnBulk.disabled = true;
-  }
+  btnBulk.disabled = bulkFiles.length === 0;
   syncHeight();
 }
 
@@ -189,30 +185,12 @@ btnSingle.addEventListener('click', async () => {
   }
 });
 
-// ── Email Flow ───────────────────────────────
-const emailFlow      = document.getElementById('email-flow');
-const emailInput     = document.getElementById('email-input');
-const doneTitle      = document.getElementById('done-title');
-const doneSub        = document.getElementById('done-sub');
-
-// Dynamically update verify button text based on email input
-emailInput.addEventListener('input', () => {
-  if (emailInput.value.trim() !== '') {
-    btnBulk.textContent = 'Verify & Send Email';
-  } else {
-    btnBulk.textContent = 'Verify & Download Excel';
-  }
-});
-
 // ── Bulk verify ───────────────────────────────
 btnBulk.addEventListener('click', async () => {
   if (!bulkFiles.length) return;
 
-  const emailVal  = emailInput.value.trim();
-  const sendEmail = emailVal !== '';
-
   hide(errorBulk); hide(bulkDone);
-  loaderBulkText.textContent = `Processing ${bulkFiles.length} file${bulkFiles.length > 1 ? 's' : ''}…`;
+  loaderBulkText.textContent = `Processing ${bulkFiles.length} file${bulkFiles.length > 1 ? 's' : ''}\u2026`;
   show(loaderBulk);
   btnBulk.disabled = true;
   syncHeight();
@@ -220,7 +198,6 @@ btnBulk.addEventListener('click', async () => {
   try {
     const fd = new FormData();
     bulkFiles.forEach(f => fd.append('certificates', f));
-    if (sendEmail) fd.append('email', emailVal);
 
     const res = await fetch(API_BULK, { method: 'POST', body: fd });
 
@@ -231,19 +208,7 @@ btnBulk.addEventListener('click', async () => {
       return;
     }
 
-    // Check if server emailed the report
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await res.json();
-      if (data.status === 'emailed') {
-        doneTitle.textContent = 'Report sent!';
-        doneSub.textContent   = `Excel report emailed to ${data.to}`;
-        show(bulkDone);
-        return;
-      }
-    }
-
-    // Otherwise trigger download
+    // Trigger Excel download
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');

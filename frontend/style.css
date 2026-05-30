@@ -433,31 +433,6 @@ html, body {
 }
 .result-note.visible { display: block; }
 
-/* ── EMAIL FLOW ─────────────────────────────── */
-.email-flow {
-  display: none; /* Shown by JS when files are added */
-  margin-top: 14px;
-}
-.email-flow.visible { display: block; }
-.email-flow-label {
-  font-size: 12px;
-  color: #8b949e;
-  margin-bottom: 6px;
-}
-.email-input {
-  width: 100%;
-  padding: 10px 12px;
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #e6edf3;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.email-input::placeholder { color: #484f58; }
-.email-input:focus { border-color: #1f6feb; }
 
 /* ── BULK DONE ────────────────────────────────── */
 .bulk-done { display: none; }
