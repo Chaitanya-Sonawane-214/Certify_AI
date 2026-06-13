@@ -1,0 +1,56 @@
+name: Build and Test Desktop App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install pyparsing packaging pyinstaller pywebview
+    
+    - name: Build Desktop App (Lite)
+      run: |
+        cd backend
+        pyinstaller CertifyAI_Lite.spec --noconfirm --clean
+    
+    - name: Test Built Executable
+      run: |
+        cd backend
+        python test_built_exe.py
+    
+    - name: Upload Build Artifact
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: CertifyAI-Windows-${{ github.sha }}
+        path: backend/dist/CertifyAI/
+        retention-days: 30
+    
+    - name: Create Release (on tag)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          backend/dist/CertifyAI/**/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

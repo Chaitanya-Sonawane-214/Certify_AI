@@ -26,4 +26,18 @@ echo.
 echo  Output: dist\CertifyAI\CertifyAI.exe
 echo.
 
+echo [Validation] Testing executable...
+python test_built_exe.py
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [WARNING] Validation failed - check errors above
+    pause
+    exit /b 1
+)
+
+echo.
+echo  Build validated successfully!
+echo.
+
 pause
