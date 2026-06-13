@@ -56,6 +56,12 @@ jobs:
           else
             VERSION="${{ github.event.inputs.version }}"
           fi
+          VERSION="$(echo "$VERSION" | xargs)"
+          VERSION="${VERSION#CertifyAI }"
+          if ! git check-ref-format --allow-onelevel "refs/tags/$VERSION"; then
+            echo "Invalid release tag: '$VERSION'. Use a valid tag like v2.0.5-desktop."
+            exit 1
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Resolved version: $VERSION"
 
@@ -64,9 +70,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.version.outputs.version }} 2>/dev/null && \
-            git push origin ${{ steps.version.outputs.version }} || \
+          VERSION="${{ steps.version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
             echo "Tag already exists, skipping."
+          else
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi
 
       - name: Generate changelog
         id: changelog
