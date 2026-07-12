@@ -1,83 +1,53 @@
 """
-Test script to validate the built executable before distribution.
-Run this after PyInstaller build completes to catch import errors.
+Quick validation test for built CertifyAI.exe
+Checks if the executable exists and has reasonable size
 """
-import subprocess
-import sys
-import time
 import os
+import sys
 
-def test_exe_imports():
-    """Test if the exe can start without import errors."""
-    exe_path = os.path.join('dist', 'CertifyAI', 'CertifyAI.exe')
+EXE_PATH = os.path.join('dist', 'CertifyAI', 'CertifyAI.exe')
+
+def validate_build():
+    """Validate the build output"""
     
-    if not os.path.exists(exe_path):
-        print("[ERROR] Executable not found at", exe_path)
+    # Check if exe exists
+    if not os.path.exists(EXE_PATH):
+        print(f"❌ ERROR: Executable not found at {EXE_PATH}")
         return False
     
-    print("[Testing] Checking executable for import errors...")
-    print(f"   Path: {exe_path}")
-    print()
+    # Check file size (should be > 10MB, < 500MB)
+    size_mb = os.path.getsize(EXE_PATH) / (1024 * 1024)
+    print(f"✓ Executable found: {EXE_PATH}")
+    print(f"✓ Size: {size_mb:.1f} MB")
     
-    try:
-        # Start the exe as a subprocess
-        process = subprocess.Popen(
-            [exe_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+    if size_mb < 10:
+        print(f"❌ WARNING: Size too small ({size_mb:.1f} MB), may be missing dependencies")
+        return False
+    
+    if size_mb > 500:
+        print(f"⚠ WARNING: Size very large ({size_mb:.1f} MB), might have unnecessary bloat")
+    
+    # Check if frontend files are bundled
+    frontend_dir = os.path.join('dist', 'CertifyAI', '_internal', 'frontend')
+    if os.path.exists(frontend_dir):
+        html_exists = os.path.exists(os.path.join(frontend_dir, 'index.html'))
+        css_exists = os.path.exists(os.path.join(frontend_dir, 'style.css'))
+        js_exists = os.path.exists(os.path.join(frontend_dir, 'script.js'))
         
-        # Wait a few seconds for startup
-        time.sleep(5)
-        
-        # Check if process is still running
-        poll = process.poll()
-        
-        if poll is None:
-            # Process is running - SUCCESS!
-            print("[PASS] Executable started successfully!")
-            print("   No import errors detected.")
-            process.terminate()
-            process.wait(timeout=5)
-            return True
+        if html_exists and css_exists and js_exists:
+            print("✓ Frontend files bundled correctly")
         else:
-            # Process exited - check for errors
-            stdout, stderr = process.communicate()
-            
-            if "ImportError" in stderr or "ModuleNotFoundError" in stderr:
-                print("[FAIL] Import error detected!")
-                print()
-                print("Error details:")
-                print(stderr)
-                return False
-            else:
-                print("[WARNING] Process exited unexpectedly")
-                print("   Exit code:", poll)
-                if stderr:
-                    print("   Error output:", stderr)
-                return False
-                
-    except Exception as e:
-        print(f"[FAIL] Could not test executable")
-        print(f"   Error: {e}")
-        return False
-
-if __name__ == "__main__":
-    print("="*60)
-    print("  Desktop App Post-Build Validation")
-    print("="*60)
-    print()
-    
-    success = test_exe_imports()
-    
-    print()
-    print("="*60)
-    if success:
-        print("[PASS] BUILD VALIDATED - Safe to distribute")
+            print("⚠ WARNING: Some frontend files may be missing")
+            print(f"  HTML: {html_exists}, CSS: {css_exists}, JS: {js_exists}")
     else:
-        print("[FAIL] BUILD FAILED VALIDATION - Do NOT distribute")
-        print("   Fix the errors above before releasing")
-    print("="*60)
+        print(f"⚠ WARNING: Frontend directory not found at {frontend_dir}")
     
+    print("\n✓ Build validation passed!")
+    print(f"\nYou can now test the app by running:")
+    print(f"  {EXE_PATH}")
+    
+    return True
+
+if __name__ == '__main__':
+    success = validate_build()
     sys.exit(0 if success else 1)

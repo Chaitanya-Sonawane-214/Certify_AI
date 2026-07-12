@@ -144,7 +144,7 @@ def main():
         background_color='#0d1117',
     )
 
-    def _boot(window):
+    def _boot():
         # 2. Start FastAPI server in the background
         server_thread = threading.Thread(target=run_server, daemon=True)
         server_thread.start()
@@ -152,7 +152,7 @@ def main():
         # 3. Wait for server
         ready = wait_for_server(timeout=30)
         if not ready:
-            window.evaluate_js(
+            splash.evaluate_js(
                 "document.querySelector('.status').textContent = "
                 "'Error: could not start server. Please restart the app.'"
             )
@@ -160,7 +160,7 @@ def main():
             os._exit(1)
 
         # 4. Destroy splash and open the real window
-        window.destroy()
+        splash.destroy()
 
         main_win = webview.create_window(
             'CertifyAI — Certificate Verification',

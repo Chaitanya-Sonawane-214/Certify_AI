@@ -20,10 +20,16 @@ jobs:
       with:
         python-version: '3.11'
     
+    - name: Install Tesseract OCR
+      run: |
+        choco install tesseract --yes
+        echo "C:\Program Files\Tesseract-OCR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    
     - name: Install dependencies
       run: |
         cd backend
         pip install -r requirements.txt
+        pip install "numpy>=1.26,<2.0"
         pip install pyparsing packaging pyinstaller pywebview
     
     - name: Build Desktop App (Lite)
@@ -36,20 +42,25 @@ jobs:
         cd backend
         python test_built_exe.py
     
+    - name: Create ZIP Archive
+      if: success()
+      run: |
+        cd backend/dist
+        Compress-Archive -Path CertifyAI -DestinationPath CertifyAI-Windows.zip
+    
     - name: Upload Build Artifact
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: CertifyAI-Windows-${{ github.sha }}
-        path: backend/dist/CertifyAI/
+        path: backend/dist/CertifyAI-Windows.zip
         retention-days: 30
     
     - name: Create Release (on tag)
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          backend/dist/CertifyAI/**/*
+        files: backend/dist/CertifyAI-Windows.zip
         draft: false
         prerelease: false
       env:
