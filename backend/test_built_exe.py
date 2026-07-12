@@ -12,20 +12,20 @@ def validate_build():
     
     # Check if exe exists
     if not os.path.exists(EXE_PATH):
-        print(f"❌ ERROR: Executable not found at {EXE_PATH}")
+        print(f"[ERROR] Executable not found at {EXE_PATH}")
         return False
     
     # Check file size (should be > 10MB, < 500MB)
     size_mb = os.path.getsize(EXE_PATH) / (1024 * 1024)
-    print(f"✓ Executable found: {EXE_PATH}")
-    print(f"✓ Size: {size_mb:.1f} MB")
+    print(f"[OK] Executable found: {EXE_PATH}")
+    print(f"[OK] Size: {size_mb:.1f} MB")
     
     if size_mb < 10:
-        print(f"❌ WARNING: Size too small ({size_mb:.1f} MB), may be missing dependencies")
+        print(f"[ERROR] Size too small ({size_mb:.1f} MB), may be missing dependencies")
         return False
     
     if size_mb > 500:
-        print(f"⚠ WARNING: Size very large ({size_mb:.1f} MB), might have unnecessary bloat")
+        print(f"[WARNING] Size very large ({size_mb:.1f} MB), might have unnecessary bloat")
     
     # Check if frontend files are bundled
     frontend_dir = os.path.join('dist', 'CertifyAI', '_internal', 'frontend')
@@ -35,14 +35,14 @@ def validate_build():
         js_exists = os.path.exists(os.path.join(frontend_dir, 'script.js'))
         
         if html_exists and css_exists and js_exists:
-            print("✓ Frontend files bundled correctly")
+            print("[OK] Frontend files bundled correctly")
         else:
-            print("⚠ WARNING: Some frontend files may be missing")
+            print("[WARNING] Some frontend files may be missing")
             print(f"  HTML: {html_exists}, CSS: {css_exists}, JS: {js_exists}")
     else:
-        print(f"⚠ WARNING: Frontend directory not found at {frontend_dir}")
+        print(f"[WARNING] Frontend directory not found at {frontend_dir}")
     
-    print("\n✓ Build validation passed!")
+    print("\n[OK] Build validation passed!")
     print(f"\nYou can now test the app by running:")
     print(f"  {EXE_PATH}")
     
